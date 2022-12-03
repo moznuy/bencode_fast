@@ -5,9 +5,9 @@
 
 static PyObject *
 decode_string(const char *bytes, Py_ssize_t size) {
-    UNUSED(size);
     const char *end = NULL;
     Py_ssize_t used_length = 0;
+    PyObject *plength = NULL, *result = NULL;
     
     // TODO: check buff overflow
     char buff[20];
@@ -17,26 +17,28 @@ decode_string(const char *bytes, Py_ssize_t size) {
     }
     buff[end-bytes] = 0;
 
-    PyObject *plength = PyLong_FromString(buff, NULL, 10);
+    plength = PyLong_FromString(buff, NULL, 10);
     if (plength == NULL) {
-        return NULL;
+        goto error;
     }
     long length = PyLong_AsLong(plength);
-    Py_XDECREF(plength);
     if (length == -1 && PyErr_Occurred() != NULL) {
-        return NULL;
+        goto error;
     }
 
     end = bytes + (end-bytes);
     if (used_length++ > size || *end++ != ':') {
         PyErr_SetString(PyExc_ValueError, "\":\" missing after string length");
-        return NULL;
+        goto error;
     }
     if (used_length + length > size) {
         PyErr_SetString(PyExc_ValueError, "missing required number of bytes after \":\"");
-        return NULL;
+        goto error;
     }
-    return PyUnicode_Decode(end, length, "utf-8", "strict");
+    result = PyUnicode_Decode(end, length, "utf-8", "strict");
+error:
+    Py_XDECREF(plength);
+    return result;
 }
 
 static PyObject *
