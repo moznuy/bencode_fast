@@ -2,20 +2,26 @@
 #include <Python.h>
 
 #define UNUSED(x) (void)(x)
+static const int BUFF_SIZE = 20;
 
 static PyObject *
-decode_string(const char *bytes, Py_ssize_t size) {
-    const char *end = NULL;
-    Py_ssize_t used_length = 0;
+decode_string(const char *bytes, Py_ssize_t size, const char **end, Py_ssize_t *new_size) {
+    const char *pos = NULL;
+    Py_ssize_t used_size = 0;
     PyObject *plength = NULL, *result = NULL;
     
-    // TODO: check buff overflow
-    char buff[20];
-    end = bytes;
-    while (used_length < size && isdigit(*end)) {
-        buff[used_length++] = *end++;
+
+    // Find smth like strcpy_s
+    char buff[BUFF_SIZE];
+    pos = bytes;
+    while (used_size < size && isdigit(*pos)) {
+        if (used_size >= BUFF_SIZE - 1) {
+            PyErr_SetString(PyExc_ValueError, "String is to long");
+            goto error;
+        }
+        buff[used_size++] = *pos++;
     }
-    buff[end-bytes] = 0;
+    buff[used_size] = 0;
 
     plength = PyLong_FromString(buff, NULL, 10);
     if (plength == NULL) {
@@ -26,17 +32,28 @@ decode_string(const char *bytes, Py_ssize_t size) {
         goto error;
     }
 
-    end = bytes + (end-bytes);
-    if (used_length++ > size || *end++ != ':') {
-        PyErr_SetString(PyExc_ValueError, "\":\" missing after string length");
+    pos = bytes + (pos-bytes);
+    if (used_size++ > size || *pos++ != ':') {
+        PyErr_SetString(PyExc_ValueError, "Missing \":\" after string length");
         goto error;
     }
-    if (used_length + length > size) {
-        PyErr_SetString(PyExc_ValueError, "missing required number of bytes after \":\"");
+    if (used_size + length > size) {
+        PyErr_SetString(PyExc_ValueError, "Missing required number of bytes after \":\"");
         goto error;
     }
-    result = PyUnicode_Decode(end, length, "utf-8", "strict");
+    result = PyUnicode_Decode(pos, length, "utf-8", "strict");
+    pos += length;
+    used_size += length;
+    // TODO: check NULLs
+    if (end != NULL) {
+        *end = pos;
+    }
+    if (new_size != NULL) {
+        *new_size = size - used_size;
+    }
+
 error:
+
     Py_XDECREF(plength);
     return result;
 }
@@ -52,7 +69,7 @@ decode(PyObject *self, PyObject *input_bytes) {
     }
     Py_ssize_t size = PyBytes_Size(input_bytes);
 
-    return decode_string(bytes, size);
+    return decode_string(bytes, size, NULL, NULL);
 }
 
 
