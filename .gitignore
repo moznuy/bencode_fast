@@ -1,0 +1,14 @@
+.vscode
+.pytest_cache
+.idea
+
+*.egg-info
+build
+dev
+pythond
+**/*.so
+**/*.o
+c_cpp_properties.json
+**/Makefile
+
+*.py[cod]
