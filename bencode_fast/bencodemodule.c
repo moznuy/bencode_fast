@@ -16,7 +16,7 @@ decode_string(const char *bytes, Py_ssize_t size, const char **end, Py_ssize_t *
     pos = bytes;
     while (used_size < size && isdigit(*pos)) {
         if (used_size >= BUFF_SIZE - 1) {
-            PyErr_SetString(PyExc_ValueError, "String is to long");
+            PyErr_SetString(PyExc_ValueError, "String is too long");
             goto error;
         }
         buff[used_size++] = *pos++;

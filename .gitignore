@@ -6,6 +6,7 @@
 build
 dev
 pythond
+dist
 **/*.so
 **/*.o
 c_cpp_properties.json
