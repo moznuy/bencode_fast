@@ -6,13 +6,12 @@ static const int BUFF_SIZE = 20;
 
 static PyObject *
 decode_string(const char *bytes, Py_ssize_t size, Py_ssize_t *remaining_size) {
-    const char *pos = NULL;
+    const char *pos = bytes;  // Redundant?
     Py_ssize_t used_size = 0;
     PyObject *plength = NULL, *result = NULL;
+    char buff[BUFF_SIZE];
     
     // Find smth like strcpy_s
-    char buff[BUFF_SIZE];
-    pos = bytes;
     while (used_size < size && isdigit(*pos)) {
         if (used_size >= BUFF_SIZE - 1) {
             PyErr_SetString(PyExc_ValueError, "String is too long");
@@ -31,7 +30,6 @@ decode_string(const char *bytes, Py_ssize_t size, Py_ssize_t *remaining_size) {
         goto error;
     }
 
-    pos = bytes + (pos-bytes);
     if (used_size++ > size || *pos++ != ':') {
         PyErr_SetString(PyExc_ValueError, "Missing \":\" after string length");
         goto error;
