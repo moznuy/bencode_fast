@@ -5,12 +5,11 @@
 static const int BUFF_SIZE = 20;
 
 static PyObject *
-decode_string(const char *bytes, Py_ssize_t size, const char **end, Py_ssize_t *new_size) {
+decode_string(const char *bytes, Py_ssize_t size, Py_ssize_t *remaining_size) {
     const char *pos = NULL;
     Py_ssize_t used_size = 0;
     PyObject *plength = NULL, *result = NULL;
     
-
     // Find smth like strcpy_s
     char buff[BUFF_SIZE];
     pos = bytes;
@@ -42,14 +41,9 @@ decode_string(const char *bytes, Py_ssize_t size, const char **end, Py_ssize_t *
         goto error;
     }
     result = PyUnicode_Decode(pos, length, "utf-8", "strict");
-    pos += length;
     used_size += length;
-    // TODO: check NULLs
-    if (end != NULL) {
-        *end = pos;
-    }
-    if (new_size != NULL) {
-        *new_size = size - used_size;
+    if (remaining_size != NULL) {
+        *remaining_size = size - used_size;
     }
 
 error:
@@ -69,7 +63,7 @@ decode(PyObject *self, PyObject *input_bytes) {
     }
     Py_ssize_t size = PyBytes_Size(input_bytes);
 
-    return decode_string(bytes, size, NULL, NULL);
+    return decode_string(bytes, size, NULL);
 }
 
 
