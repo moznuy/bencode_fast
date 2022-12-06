@@ -125,18 +125,17 @@ decode(PyObject *self, PyObject *input_bytes) {
 }
 
 
-static PyMethodDef SpamMethods[] = {
+static PyMethodDef DecodeMethods[] = {
     {"decode", decode, METH_O, "Decode bencode"},
     {NULL, NULL, 0, NULL}
 };
 
 static struct PyModuleDef bencodemodule = {
     PyModuleDef_HEAD_INIT,
-    "bencodemodule",      /* name of module */
-    "bencodemodule docs",  /* module documentation, may be NULL */
-    -1,          /* size of per-interpreter state of the module,
-                 or -1 if the module keeps state in global variables. */
-    SpamMethods,
+    "bencodemodule",
+    "bencodemodule docs",
+    -1,
+    DecodeMethods,
     NULL,
     NULL,
     NULL,
