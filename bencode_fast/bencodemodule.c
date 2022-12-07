@@ -4,46 +4,67 @@
 #define UNUSED(x) (void)(x)
 static const int BUFF_SIZE = 20;
 
-static PyObject *decode_string(const char *bytes, Py_ssize_t size,
-                               Py_ssize_t *remaining_size) {
-  const char *pos = bytes; // Redundant?
-  Py_ssize_t used_size = 0;
-  PyObject *plength = NULL, *result = NULL;
+// Forget about PyLong_FromString and buff and just construct number by self
+static PyObject *parse_long(const char **source_beg, const char *source_end) {
   char buff[BUFF_SIZE];
+  const char *source_pos = *source_beg;
 
-  // Find smth like strcpy_s
-  while (used_size < size && isdigit(*pos)) {
-    if (used_size >= BUFF_SIZE - 1) {
-      PyErr_SetString(PyExc_ValueError, "String is too long");
-      goto error;
-    }
-    buff[used_size++] = *pos++;
+  while ((source_pos < source_end && isdigit(*source_pos)) ||
+         (source_pos == *source_beg && *source_pos == '-')) {
+    ++source_pos;
   }
-  buff[used_size] = 0;
 
-  plength = PyLong_FromString(buff, NULL, 10);
+  // Zero digits
+  if (source_pos == *source_beg ||
+      (source_pos == *source_beg + 1 && **source_beg == '-')) {
+    PyErr_SetString(PyExc_ValueError, "Integer expected");
+    return NULL;
+  }
+
+  if (source_pos - *source_beg + 1 > BUFF_SIZE) {
+    PyErr_SetString(PyExc_ValueError, "Integer is too large");
+    return NULL;
+  }
+  memcpy(buff, *source_beg, source_pos - *source_beg);
+  buff[source_pos - *source_beg + 1] = 0;
+
+  *source_beg = source_pos;
+  return PyLong_FromString(buff, NULL, 10);
+}
+
+static PyObject *decode_string(const char **beg, const char *end) {
+  // Parse the length
+  PyObject *plength = NULL, *result = NULL;
+
+  plength = parse_long(beg, end);
   if (plength == NULL) {
     goto error;
   }
+
   long length = PyLong_AsLong(plength);
   if (length == -1 && PyErr_Occurred() != NULL) {
     goto error;
   }
 
-  if (used_size++ > size || *pos++ != ':') {
+  if (length < 0) {
+    PyErr_SetString(PyExc_ValueError, "String length can't be negative");
+    goto error;
+  }
+
+  if (*beg >= end || *(*beg)++ != ':') {
     PyErr_SetString(PyExc_ValueError, "Missing \":\" after string length");
     goto error;
   }
-  if (used_size + length > size) {
+
+  // Check again if correct:
+  if (*beg + length > end) {
     PyErr_SetString(PyExc_ValueError,
                     "Missing required number of bytes after \":\"");
     goto error;
   }
-  result = PyUnicode_Decode(pos, length, "utf-8", "strict");
-  used_size += length;
-  if (remaining_size != NULL) {
-    *remaining_size = size - used_size;
-  }
+
+  result = PyUnicode_Decode(*beg, length, "utf-8", "strict");
+  *beg += length;
 
 error:
 
@@ -51,52 +72,25 @@ error:
   return result;
 }
 
-static PyObject *decode_integer(const char *bytes, Py_ssize_t size,
-                                Py_ssize_t *remaining_size) {
-  const char *pos = bytes; // Redundant?
-  Py_ssize_t used_size = 0, buff_index = 0;
+static PyObject *decode_integer(const char **beg, const char *end) {
   PyObject *result = NULL;
-  char buff[BUFF_SIZE];
 
-  pos = bytes;
   // Check for 'i'
-  if (used_size++ > size || *pos++ != 'i') {
+  if (*beg >= end || *(*beg)++ != 'i') {
     PyErr_SetString(PyExc_ValueError, "Missing \"i\" before integer");
     goto error;
   }
 
-  // Optional '-'
-  if (used_size < size && *pos == '-') {
-    buff[buff_index++] = *pos++;
-    used_size++;
-  }
-
-  // TODO: Same as above
-  // Copy digits to \0 terminated string
-  while (used_size < size && isdigit(*pos)) {
-    if (buff_index >= BUFF_SIZE - 1) {
-      PyErr_SetString(PyExc_ValueError, "Integer is too long");
-      goto error;
-    }
-    buff[buff_index++] = *pos++;
-    used_size++;
-  }
-  buff[buff_index] = 0;
-
   // Convert to Python int
-  result = PyLong_FromString(buff, NULL, 10);
+  result = parse_long(beg, end);
   if (result == NULL) {
     goto error;
   }
 
   // Check for 'e'
-  if (used_size++ > size || *pos++ != 'e') {
+  if (*beg >= end || *(*beg)++ != 'e') {
     PyErr_SetString(PyExc_ValueError, "Missing \"e\" after integer");
     goto error;
-  }
-
-  if (remaining_size != NULL) {
-    *remaining_size = size - used_size;
   }
 
   return result;
@@ -116,10 +110,12 @@ static PyObject *decode(PyObject *self, PyObject *input_bytes) {
   }
   Py_ssize_t size = PyBytes_Size(input_bytes);
 
-  // return decode_string(bytes, size, NULL);
-  Py_ssize_t tmp = size;
-  PyObject *result = decode_integer(bytes, size, &tmp);
-  fprintf(stderr, "\nprevios size: %zu, remaining size: %zu", size, tmp);
+  const char *tmp = bytes;
+  // fprintf(stderr, "\n B: %p", bytes);
+  PyObject *result = decode_integer(&bytes, bytes + size);
+  // fprintf(stderr, "\n A: %p", bytes);
+  fprintf(stderr, "\nprevios size: %zu, remaining size: %zu", size,
+          size - (bytes - tmp));
   return result;
 }
 
