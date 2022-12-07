@@ -1,11 +1,16 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define UNUSED(x) (void)(x)
 static const int BUFF_SIZE = 20;
 
-// Forget about PyLong_FromString and buff and just construct number by self
-static PyObject *parse_long(const char **source_beg, const char *source_end) {
+// We can't change src bytes, because they belong to Python Bytes Object
+// and \0 terminated string is required for PyLong_FromString
+// Hence this function
+//
+// TODO: Forget about PyLong_FromString and buff and just construct number by
+// self
+static PyObject *PyLong_FromStringPrefix(const char **source_beg,
+                                         const char *source_end) {
   char buff[BUFF_SIZE];
   const char *source_pos = *source_beg;
 
@@ -26,7 +31,7 @@ static PyObject *parse_long(const char **source_beg, const char *source_end) {
     return NULL;
   }
   memcpy(buff, *source_beg, source_pos - *source_beg);
-  buff[source_pos - *source_beg + 1] = 0;
+  buff[source_pos - *source_beg] = 0;
 
   *source_beg = source_pos;
   return PyLong_FromString(buff, NULL, 10);
@@ -36,7 +41,7 @@ static PyObject *decode_string(const char **beg, const char *end) {
   // Parse the length
   PyObject *plength = NULL, *result = NULL;
 
-  plength = parse_long(beg, end);
+  plength = PyLong_FromStringPrefix(beg, end);
   if (plength == NULL) {
     goto error;
   }
@@ -82,7 +87,7 @@ static PyObject *decode_integer(const char **beg, const char *end) {
   }
 
   // Convert to Python int
-  result = parse_long(beg, end);
+  result = PyLong_FromStringPrefix(beg, end);
   if (result == NULL) {
     goto error;
   }
@@ -100,8 +105,43 @@ error:
   return result;
 }
 
-static PyObject *decode(PyObject *self, PyObject *input_bytes) {
-  UNUSED(self);
+static PyObject *decode_list(const char **Py_UNUSED(beg),
+                             const char *Py_UNUSED(end)) {
+  PyErr_SetString(PyExc_NotImplementedError, "");
+  return NULL;
+}
+
+static PyObject *decode_dict(const char **Py_UNUSED(beg),
+                             const char *Py_UNUSED(end)) {
+  PyErr_SetString(PyExc_NotImplementedError, "");
+  return NULL;
+}
+
+static PyObject *_decode(const char **beg, const char *end) {
+  if (*beg >= end) {
+    PyErr_SetString(PyExc_AssertionError, "Decode error");
+    return NULL;
+  }
+
+  if (**beg == 'i') {
+    return decode_integer(beg, end);
+  }
+  if (isdigit(**beg)) {
+    return decode_string(beg, end);
+  }
+  if (**beg == 'l') {
+    return decode_list(beg, end);
+  }
+  if (**beg == 'd') {
+    return decode_dict(beg, end);
+  }
+
+  PyErr_SetString(PyExc_ValueError,
+                  "Unknown character found at the beginning of new value");
+  return NULL;
+}
+
+static PyObject *decode(PyObject *Py_UNUSED(self), PyObject *input_bytes) {
   const char *bytes;
 
   bytes = PyBytes_AsString(input_bytes);
@@ -112,7 +152,7 @@ static PyObject *decode(PyObject *self, PyObject *input_bytes) {
 
   const char *tmp = bytes;
   // fprintf(stderr, "\n B: %p", bytes);
-  PyObject *result = decode_integer(&bytes, bytes + size);
+  PyObject *result = _decode(&bytes, bytes + size);
   // fprintf(stderr, "\n A: %p", bytes);
   fprintf(stderr, "\nprevios size: %zu, remaining size: %zu", size,
           size - (bytes - tmp));
