@@ -2,6 +2,7 @@
 #include <Python.h>
 
 static const int BUFF_SIZE = 20;
+static PyObject *_decode(const char **beg, const char *end);
 
 // We can't change src bytes, because they belong to Python Bytes Object
 // and \0 terminated string is required for PyLong_FromString
@@ -105,10 +106,49 @@ error:
   return result;
 }
 
-static PyObject *decode_list(const char **Py_UNUSED(beg),
-                             const char *Py_UNUSED(end)) {
-  PyErr_SetString(PyExc_NotImplementedError, "");
-  return NULL;
+static PyObject *decode_list(const char **beg, const char *end) {
+  PyObject *result = NULL, *item = NULL;
+
+  // Check for 'l'
+  if (*beg >= end || *(*beg)++ != 'l') {
+    PyErr_SetString(PyExc_ValueError, "Missing \"l\" before list");
+    goto error;
+  }
+
+  result = PyList_New(0);
+  if (result == NULL) {
+    goto error;
+  }
+
+  while (1) {
+    if (*beg >= end) {
+      PyErr_SetString(PyExc_ValueError, "Missing \"e\" after list");
+      goto error;
+    }
+
+    // Check for 'e'
+    if (**beg == 'e') {
+      (*beg)++;
+      break;
+    }
+
+    item = _decode(beg, end);
+    if (item == NULL) {
+      goto error;
+    }
+    if (PyList_Append(result, item) != 0) {
+      goto error;
+    }
+    Py_CLEAR(item);
+  }
+
+  return result;
+
+error:
+
+  Py_CLEAR(item);
+  Py_CLEAR(result);
+  return result;
 }
 
 static PyObject *decode_dict(const char **Py_UNUSED(beg),
@@ -150,12 +190,15 @@ static PyObject *decode(PyObject *Py_UNUSED(self), PyObject *input_bytes) {
   }
   Py_ssize_t size = PyBytes_Size(input_bytes);
 
-  const char *tmp = bytes;
-  // fprintf(stderr, "\n B: %p", bytes);
+  const char *beg = bytes;
   PyObject *result = _decode(&bytes, bytes + size);
-  // fprintf(stderr, "\n A: %p", bytes);
-  fprintf(stderr, "\nprevios size: %zu, remaining size: %zu", size,
-          size - (bytes - tmp));
+  if (bytes != beg + size && PyErr_Occurred() == NULL) {
+    Py_CLEAR(result);
+    PyErr_SetString(PyExc_ValueError,
+                    "Supported only 1 value in the top level");
+  }
+  // fprintf(stderr, "\nprevios size: %zu, remaining size: %zu", size,
+  //         size - (bytes - beg));
   return result;
 }
 

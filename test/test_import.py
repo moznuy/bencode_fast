@@ -42,3 +42,14 @@ def test_integers():
 def test_list():
     assert [] == decode(b"le")
     assert ["spam", "eggs"] == decode(b"l4:spam4:eggse")
+
+    assert [["spam", "eggs"], ["cat", "dog"]] == decode(b"ll4:spam4:eggsel3:cat3:dogee")
+    assert [[], [[]]] == decode(b"llelleee")
+
+    with pytest.raises(ValueError, match='Missing "e" after list'):
+        assert [] == decode(b"l4:spam")
+
+
+def test_not_one_value():
+    with pytest.raises(ValueError, match="Supported only 1 value in the top level"):
+        assert [] == decode(b"lelele")
