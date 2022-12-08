@@ -1,7 +1,8 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-static const int BUFF_SIZE = 20;
+#define BUFF_SIZE 20
+
 static PyObject *_decode(const char **beg, const char *end);
 
 // We can't change src bytes, because they belong to Python Bytes Object

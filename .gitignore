@@ -10,6 +10,5 @@ dist
 **/*.so
 **/*.o
 c_cpp_properties.json
-**/Makefile
 
 *.py[cod]
