@@ -4,7 +4,6 @@
 
 *.egg-info
 build
-dev
 pythond
 dist
 **/*.so

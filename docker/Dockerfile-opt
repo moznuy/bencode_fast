@@ -1,0 +1,50 @@
+FROM debian:11-slim as build
+
+RUN apt-get update
+RUN apt-get install -y --no-install-suggests --no-install-recommends curl xz-utils ca-certificates
+
+WORKDIR /tmp
+ENV PYTHON_VERSION=3.11.1
+RUN curl -sSL -o python.tar.xz https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz
+RUN tar -xf python.tar.xz
+
+WORKDIR /tmp/Python-${PYTHON_VERSION}
+RUN apt-get install -y --no-install-suggests --no-install-recommends \
+    clang llvm lld pkg-config
+
+RUN apt-get install -y --no-install-suggests --no-install-recommends \
+    libssl-dev zlib1g-dev libbz2-dev liblzma-dev lzma-dev libreadline-dev libsqlite3-dev libncurses5-dev \
+    libncursesw5-dev xz-utils tk-dev libgdbm-dev libgdbm-compat-dev libdb-dev libffi-dev uuid-dev
+
+RUN ./configure \
+    --prefix /opt/python \
+    --with-pydebug \
+    --with-trace-refs \
+    --with-assertions \
+    --without-pymalloc \
+    --with-address-sanitizer \
+#    --enable-optimizations \
+    --enable-shared \
+    --with-lto=no \
+    --with-ensurepip=install
+
+RUN make -j 16
+ENV PATH="/opt/python/bin:$PATH"
+RUN make install
+CMD python3
+
+FROM debian:11-slim as final
+ENV PATH="/opt/python/bin:$PATH"
+RUN apt-get update && \
+    apt-get install -y --no-install-suggests --no-install-recommends libreadline8 libsqlite3-0 && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /opt/python /opt/python
+RUN echo "/opt/python/lib" > /etc/ld.so.conf.d/custom-python.conf
+RUN ldconfig
+#RUN python3 -m test
+CMD python3
+# Failures:
+#    test_asyncio test_bz2 test_ctypes test_faulthandler test_os
+#    test_socket test_ssl test_support test_thread test_threading
+#    test_tracemalloc test_warnings

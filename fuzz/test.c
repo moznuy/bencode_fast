@@ -29,5 +29,9 @@ int main(void) {
   PyBytes_AsStringAndSize(t2, &k2, &s2);
   printf("k1: %s\n\n", k1);
   printf("k2: %lu %s\n\n,", s2, k2);
+
+  if (Py_FinalizeEx() != 0) {
+    return 1;
+  }
   return 0;
 }

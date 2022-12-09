@@ -4,3 +4,4 @@ crashes
 **/coverage
 fuzzer
 test
+fuzz-*.log

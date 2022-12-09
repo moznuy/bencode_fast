@@ -114,7 +114,7 @@ static PyObject *decode_list(const char **beg, const char *end) {
   if (*beg >= end) {
     PyErr_SetString(PyExc_SystemError, "Internal error");
     goto error;
-  } 
+  }
 
   // Check for 'l'
   if (*(*beg)++ != 'l') {
