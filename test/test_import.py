@@ -53,3 +53,13 @@ def test_list():
 def test_not_one_value():
     with pytest.raises(ValueError, match="Supported only 1 value in the top level"):
         assert [] == decode(b"lelele")
+
+
+def test_zero_byte():
+    with pytest.raises(ValueError, match=r"Bytes must not contain '\\0' character"):
+        assert [] == decode(b"l\0e")
+
+
+def test_recursion_limit():
+    with pytest.raises(RecursionError):
+        decode(b"l" * 200000)

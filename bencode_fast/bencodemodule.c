@@ -159,27 +159,40 @@ static PyObject *decode_dict(const char **Py_UNUSED(beg),
 }
 
 static PyObject *_decode(const char **beg, const char *end) {
-  if (*beg >= end) {
-    PyErr_SetString(PyExc_AssertionError, "Decode error");
+  PyObject *result = NULL;
+
+  if (Py_EnterRecursiveCall("decodemodule") != 0) {
     return NULL;
   }
 
+  if (*beg >= end) {
+    PyErr_SetString(PyExc_AssertionError, "Decode error");
+    goto exit;
+  }
+
   if (**beg == 'i') {
-    return decode_integer(beg, end);
+    result = decode_integer(beg, end);
+    goto exit;
   }
   if (isdigit(**beg)) {
-    return decode_string(beg, end);
+    result = decode_string(beg, end);
+    goto exit;
   }
   if (**beg == 'l') {
-    return decode_list(beg, end);
+    result = decode_list(beg, end);
+    goto exit;
   }
   if (**beg == 'd') {
-    return decode_dict(beg, end);
+    result = decode_dict(beg, end);
+    goto exit;
   }
 
   PyErr_SetString(PyExc_ValueError,
                   "Unknown character found at the beginning of new value");
-  return NULL;
+
+exit:
+  Py_LeaveRecursiveCall();
+  return result;
 }
 
 static PyObject *decode(PyObject *Py_UNUSED(self), PyObject *input_bytes) {
@@ -187,14 +200,14 @@ static PyObject *decode(PyObject *Py_UNUSED(self), PyObject *input_bytes) {
   Py_ssize_t size = 0;
   PyObject *result = NULL;
 
-  if (PyBytes_AsStringAndSize(input_bytes, &bytes, &size) == -1) {
+  if (PyBytes_AsStringAndSize(input_bytes, (char **)&bytes, &size) == -1) {
     goto exit;
   }
 
   for (const char *pos = bytes; pos < bytes + size; pos++) {
     if (*pos == '\0') {
       PyErr_SetString(PyExc_ValueError,
-                      "Bytes must not contain '\0' character");
+                      "Bytes must not contain '\\0' character");
       goto exit;
     }
   }

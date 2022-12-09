@@ -1,4 +1,4 @@
-CFLAGS = -I../pythond/include/python3.11d -I../pythond/include/python3.11d -I../bencode_fast  -Wsign-compare  -g -O0 -Wall -Wextra -Wpedantic
+CFLAGS = -I../pythond/include/python3.11d -I../pythond/include/python3.11d -I../bencode_fast  -Wsign-compare  -g -O0 -Wall -Wextra -Wpedantic -Werror
 LDFLAGS = -L../pythond/lib -lpython3.11d -Wl,-rpath=../pythond/lib  -lpthread -ldl  -lutil -lm  
 
 
@@ -16,7 +16,7 @@ coverage: ../bencode_fast/bencodemodule.c fuzzer.c standalone_fuzzer_main.c
 fuzz: fuzzer
 	mkdir -p crashes
 	mkdir -p CORPUS
-	PYTHONHOME=$(shell pwd)/../pythond ./fuzzer -detect_leaks=0 -artifact_prefix=./crashes/ CORPUS
+	PYTHONHOME=$(shell pwd)/../pythond ./fuzzer -detect_leaks=1 -artifact_prefix=./crashes/ -max_len=65536 -jobs=12 -reload=1 CORPUS
 
 
 .PHONY: cov

@@ -2,7 +2,7 @@ from distutils.core import setup, Extension
 
 c_ext = Extension(
     "bencode_fast.bencodemodule",
-    extra_compile_args=["-O0", "-g"],
+    # extra_compile_args=["-O0", "-g"],
     sources=["bencode_fast/bencodemodule.c"],
 )
 

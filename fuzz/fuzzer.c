@@ -25,33 +25,29 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   }
 
   for (const uint8_t *pos = Data; pos < Data + Size - 1; pos++) {
-    if (*pos == 0) {
-      return 0;
-    }
     // Check for ascii text
     if (!isprint(*pos)) {
       return 0;
     }
   }
-  if (Data[Size - 1] != 0) {
-    return 0;
-  }
 
   // fprintf(stderr, "\n\nExample string: %s\n\n", Data);
   // exit(3);
-  PyObject *tmp = PyBytes_FromString((const char *)Data);
+  PyObject *tmp = PyBytes_FromStringAndSize((const char *)Data, Size);
   if (tmp == NULL) {
     return 0;
   }
+  //   PyObject_Print(tmp, stdout, 0);
+  //   fputs("\n", stdout);
   PyObject *result = NULL;
   // Py_BEGIN_ALLOW_THREADS Nope :( Python memory allocator called without
   // holding the GIL
   result = decode(NULL, tmp);
   // Py_END_ALLOW_THREADS
-  // if (result != NULL && rand()%100 == 0) {
-  //   PyObject_Print(result, stderr, 0);
-  //   fprintf(stderr, "\n");
-  // }
+  //   if (result != NULL) {
+  //     PyObject_Print(result, stderr, 0);
+  //     fprintf(stderr, "\n");
+  //   }
   PyErr_Clear();
   Py_CLEAR(result);
   Py_CLEAR(tmp);
