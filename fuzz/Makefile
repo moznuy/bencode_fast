@@ -16,7 +16,8 @@ coverage: ../bencode_fast/bencodemodule.c fuzzer.c standalone_fuzzer_main.c
 fuzz: fuzzer
 	mkdir -p crashes
 	mkdir -p CORPUS
-	PYTHONHOME=$(shell pwd)/../pythond ./fuzzer -detect_leaks=1 -artifact_prefix=./crashes/ -max_len=65536 -jobs=12 -reload=1 CORPUS
+	PYTHONHOME=$(shell pwd)/../pythond ./fuzzer -detect_leaks=1 -artifact_prefix=./crashes/ -max_len=65536 CORPUS
+# -jobs=12 -reload=1 
 
 
 .PHONY: cov

@@ -20,17 +20,6 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   static once_flag flag = ONCE_FLAG_INIT;
   call_once(&flag, DoInitialization);
 
-  if (Size < 1) {
-    return 0;
-  }
-
-  for (const uint8_t *pos = Data; pos < Data + Size - 1; pos++) {
-    // Check for ascii text
-    if (!isprint(*pos)) {
-      return 0;
-    }
-  }
-
   // fprintf(stderr, "\n\nExample string: %s\n\n", Data);
   // exit(3);
   PyObject *tmp = PyBytes_FromStringAndSize((const char *)Data, Size);

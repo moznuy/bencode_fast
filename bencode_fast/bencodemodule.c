@@ -110,8 +110,14 @@ error:
 static PyObject *decode_list(const char **beg, const char *end) {
   PyObject *result = NULL, *item = NULL;
 
+  // Sanity check
+  if (*beg >= end) {
+    PyErr_SetString(PyExc_SystemError, "Internal error");
+    goto error;
+  } 
+
   // Check for 'l'
-  if (*beg >= end || *(*beg)++ != 'l') {
+  if (*(*beg)++ != 'l') {
     PyErr_SetString(PyExc_ValueError, "Missing \"l\" before list");
     goto error;
   }
