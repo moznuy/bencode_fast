@@ -1,7 +1,6 @@
 #include <Python.h>
 #include <stdio.h>
 
-
 int main(void) {
   PyStatus status;
   PyConfig config;
@@ -12,10 +11,10 @@ int main(void) {
     exit(2);
   }
   PyConfig_Clear(&config);
-//  PyRun_SimpleString("from time import time,ctime\n"
-//                     "print('Today is', ctime(time()))\n");
+  //  PyRun_SimpleString("from time import time,ctime\n"
+  //                     "print('Today is', ctime(time()))\n");
 
-  char* t = "abc\0def";
+  char *t = "abc\0def";
   printf("%s\n\n", t);
   PyObject *t1 = PyBytes_FromString(t);
   PyObject *t2 = PyBytes_FromStringAndSize(t, 8);

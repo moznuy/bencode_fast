@@ -29,7 +29,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
       return 0;
     }
     // Check for ascii text
-    if (!isprint(*pos)) { 
+    if (!isprint(*pos)) {
       return 0;
     }
   }
@@ -44,7 +44,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
     return 0;
   }
   PyObject *result = NULL;
-  // Py_BEGIN_ALLOW_THREADS Nope :( Python memory allocator called without holding the GIL
+  // Py_BEGIN_ALLOW_THREADS Nope :( Python memory allocator called without
+  // holding the GIL
   result = decode(NULL, tmp);
   // Py_END_ALLOW_THREADS
   // if (result != NULL && rand()%100 == 0) {

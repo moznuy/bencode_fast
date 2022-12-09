@@ -193,9 +193,9 @@ static PyObject *decode(PyObject *Py_UNUSED(self), PyObject *input_bytes) {
 
   for (const char *pos = bytes; pos < bytes + size; pos++) {
     if (*pos == '\0') {
-        PyErr_SetString(PyExc_ValueError,
-                    "Bytes must not contain '\0' character");
-        goto exit;
+      PyErr_SetString(PyExc_ValueError,
+                      "Bytes must not contain '\0' character");
+      goto exit;
     }
   }
 
@@ -209,7 +209,7 @@ static PyObject *decode(PyObject *Py_UNUSED(self), PyObject *input_bytes) {
   // fprintf(stderr, "\nprevios size: %zu, remaining size: %zu", size,
   //         size - (bytes - beg));
 
-exit: 
+exit:
   return result;
 }
 
