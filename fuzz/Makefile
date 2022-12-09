@@ -25,6 +25,13 @@ cov: coverage
 	llvm-profdata merge -sparse *.profraw -o coverage.profdata
 	llvm-cov show coverage -instr-profile=coverage.profdata -name=decode
 
+
+.PHONY: test
+test: test.c
+	clang ${CFLAGS} ${LDFLAGS} test.c -o test
+	./test
+
+
 .PHONY: clean
 clean:
 	rm -r *.o crash-* leak-* fuzz-* *.prof* fuzzer test coverage __pycache__ *.so 2>/dev/null || true

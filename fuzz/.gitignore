@@ -3,3 +3,4 @@ crashes
 **/*.prof*
 **/coverage
 fuzzer
+test
