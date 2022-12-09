@@ -183,16 +183,24 @@ static PyObject *_decode(const char **beg, const char *end) {
 }
 
 static PyObject *decode(PyObject *Py_UNUSED(self), PyObject *input_bytes) {
-  const char *bytes;
+  const char *bytes = NULL;
+  Py_ssize_t size = 0;
+  PyObject *result = NULL;
 
-  bytes = PyBytes_AsString(input_bytes);
-  if (bytes == NULL) {
-    return NULL;
+  if (PyBytes_AsStringAndSize(input_bytes, &bytes, &size) == -1) {
+    goto exit;
   }
-  Py_ssize_t size = PyBytes_Size(input_bytes);
+
+  for (const char *pos = bytes; pos < bytes + size; pos++) {
+    if (*pos == '\0') {
+        PyErr_SetString(PyExc_ValueError,
+                    "Bytes must not contain '\0' character");
+        goto exit;
+    }
+  }
 
   const char *beg = bytes;
-  PyObject *result = _decode(&bytes, bytes + size);
+  result = _decode(&bytes, bytes + size);
   if (bytes != beg + size && PyErr_Occurred() == NULL) {
     Py_CLEAR(result);
     PyErr_SetString(PyExc_ValueError,
@@ -200,6 +208,8 @@ static PyObject *decode(PyObject *Py_UNUSED(self), PyObject *input_bytes) {
   }
   // fprintf(stderr, "\nprevios size: %zu, remaining size: %zu", size,
   //         size - (bytes - beg));
+
+exit: 
   return result;
 }
 
