@@ -31,20 +31,22 @@ RUN ./configure \
 RUN make -j 16
 ENV PATH="/opt/python/bin:$PATH"
 RUN make install
-CMD python3
-
-FROM debian:11-slim as final
-ENV PATH="/opt/python/bin:$PATH"
-RUN apt-get update && \
-    apt-get install -y --no-install-suggests --no-install-recommends libreadline8 libsqlite3-0 && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY --from=build /opt/python /opt/python
 RUN echo "/opt/python/lib" > /etc/ld.so.conf.d/custom-python.conf
 RUN ldconfig
-#RUN python3 -m test
 CMD python3
-# Failures:
-#    test_asyncio test_bz2 test_ctypes test_faulthandler test_os
-#    test_socket test_ssl test_support test_thread test_threading
-#    test_tracemalloc test_warnings
+
+#FROM debian:11-slim as final
+#ENV PATH="/opt/python/bin:$PATH"
+#RUN apt-get update && \
+#    apt-get install -y --no-install-suggests --no-install-recommends libreadline8 libsqlite3-0 && \
+#    rm -rf /var/lib/apt/lists/*
+#
+#COPY --from=build /opt/python /opt/python
+#RUN echo "/opt/python/lib" > /etc/ld.so.conf.d/custom-python.conf
+#RUN ldconfig
+##RUN python3 -m test
+#CMD python3
+## Failures:
+##    test_asyncio test_bz2 test_ctypes test_faulthandler test_os
+##    test_socket test_ssl test_support test_thread test_threading
+##    test_tracemalloc test_warnings

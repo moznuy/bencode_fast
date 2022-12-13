@@ -63,3 +63,14 @@ def test_zero_byte():
 def test_recursion_limit():
     with pytest.raises(RecursionError):
         decode(b"l" * 200000)
+
+
+def test_dict():
+    assert {} == decode(b"de")
+    assert {"cow": "moo", "spam": "eggs"} == decode(b"d3:cow3:moo4:spam4:eggse")
+
+    assert {"spam": ["a", "b"]} == decode(b"d4:spaml1:a1:bee")
+    assert {"a": {}, "b": {"c": {}}} == decode(b"d1:ade1:bd1:cdeee")
+
+    with pytest.raises(ValueError, match='Missing "e" after dict'):
+        assert {} == decode(b"d4:spami3e")

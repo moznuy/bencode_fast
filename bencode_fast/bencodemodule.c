@@ -158,10 +158,62 @@ error:
   return result;
 }
 
-static PyObject *decode_dict(const char **Py_UNUSED(beg),
-                             const char *Py_UNUSED(end)) {
-  PyErr_SetString(PyExc_NotImplementedError, "");
-  return NULL;
+// TODO: maybe SortedDict per spec?
+static PyObject *decode_dict(const char **beg, const char *end) {
+  PyObject *result = NULL, *key = NULL, *value = NULL;
+
+  // Sanity check
+  if (*beg >= end) {
+    PyErr_SetString(PyExc_SystemError, "Internal error");
+    goto error;
+  }
+
+  // Check for 'd'
+  if (*(*beg)++ != 'd') {
+    PyErr_SetString(PyExc_ValueError, "Missing \"d\" before dict");
+    goto error;
+  }
+
+  result = PyDict_New();
+  if (result == NULL) {
+    goto error;
+  }
+
+  while (1) {
+    if (*beg >= end) {
+      PyErr_SetString(PyExc_ValueError, "Missing \"e\" after dict");
+      goto error;
+    }
+
+    // Check for 'e'
+    if (**beg == 'e') {
+      (*beg)++;
+      break;
+    }
+
+    key = decode_string(beg, end);
+    if (key == NULL) {
+      goto error;
+    }
+    value = _decode(beg, end);
+    if (value == NULL) {
+      goto error;
+    }
+    if (PyDict_SetItem(result, key, value) != 0) {
+      goto error;
+    }
+    Py_CLEAR(key);
+    Py_CLEAR(value);
+  }
+
+  return result;
+
+error:
+
+  Py_CLEAR(key);
+  Py_CLEAR(value);
+  Py_CLEAR(result);
+  return result;
 }
 
 static PyObject *_decode(const char **beg, const char *end) {

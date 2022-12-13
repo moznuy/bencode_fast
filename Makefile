@@ -6,6 +6,7 @@ fuzzer:
 .PHONY: clean
 clean:
 	$(MAKE) -C fuzz clean
+	sudo rm -rf .pytest_cache *.egg-info build bencode_fast/*.so
 
 
 .PHONY: fuzz
@@ -20,7 +21,4 @@ cov:
 
 .PHONY: format
 format:
-	clang-format -i bencode_fast/bencodemodule.c
-	clang-format -i fuzz/fuzzer.c
-	clang-format -i fuzz/standalone_fuzzer_main.c
-	clang-format -i fuzz/test.c
+	clang-format -i --verbose bencode_fast/*.c fuzz/*.c
