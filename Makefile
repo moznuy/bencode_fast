@@ -6,7 +6,7 @@ fuzzer:
 .PHONY: clean
 clean:
 	$(MAKE) -C fuzz clean
-	sudo rm -rf .pytest_cache *.egg-info build bencode_fast/*.so
+	sudo rm -rf .pytest_cache *.egg-info build bencode_fast/*.so wheelhouse
 
 
 .PHONY: fuzz

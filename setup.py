@@ -2,7 +2,7 @@ from distutils.core import setup, Extension
 
 c_ext = Extension(
     "bencode_fast.bencodemodule",
-    # extra_compile_args=["-O0", "-g"],
+    extra_compile_args=["-Werror"],
     sources=["bencode_fast/bencodemodule.c"],
 )
 
@@ -12,4 +12,6 @@ setup(
     description="Fast bencode parser",
     ext_modules=[c_ext],
     packages=["bencode_fast"],
+    python_requires=">=3.9.0",  # TODO: because of: Py_EnterRecursiveCall, Py_LeaveRecursiveCall
+    # TODO: if solved, then >=3.6.0
 )

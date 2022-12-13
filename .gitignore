@@ -6,6 +6,7 @@
 build
 pythond
 dist
+wheelhouse
 **/*.so
 **/*.o
 c_cpp_properties.json

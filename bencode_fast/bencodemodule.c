@@ -1,5 +1,9 @@
 #define PY_SSIZE_T_CLEAN
+#ifndef FUZZING
+#define Py_LIMITED_API 0x03060000
+#endif
 #include <Python.h>
+#include <string.h>  // memcpy
 
 #define BUFF_SIZE 20
 

@@ -1,3 +1,4 @@
+CC = clang
 CFLAGS = -I../pythond/include/python3.11d -I../pythond/include/python3.11d -I../bencode_fast  -Wsign-compare  -g -O0 -Wall -Wextra -Wpedantic -Werror -fno-omit-frame-pointer
 LDFLAGS = -L../pythond/lib -lpython3.11d -Wl,-rpath=../pythond/lib  -lpthread -ldl  -lutil -lm
 
@@ -6,10 +7,10 @@ LDFLAGS = -L../pythond/lib -lpython3.11d -Wl,-rpath=../pythond/lib  -lpthread -l
 all: fuzzer coverage
 
 fuzzer: ../bencode_fast/bencodemodule.c fuzzer.c
-	clang ${CFLAGS} ${LDFLAGS} -fsanitize=fuzzer,address fuzzer.c -o fuzzer
+	${CC} ${CFLAGS} ${LDFLAGS} -fsanitize=fuzzer,address fuzzer.c -o fuzzer
 
 coverage: ../bencode_fast/bencodemodule.c fuzzer.c standalone_fuzzer_main.c
-	clang ${CFLAGS} ${LDFLAGS} -lasan -fprofile-instr-generate -fcoverage-mapping fuzzer.c standalone_fuzzer_main.c -o coverage
+	${CC} ${CFLAGS} ${LDFLAGS} -lasan -fprofile-instr-generate -fcoverage-mapping fuzzer.c standalone_fuzzer_main.c -o coverage
 
 
 .PHONY: fuzz
@@ -29,10 +30,15 @@ cov: coverage
 
 .PHONY: test
 test: test.c
-	clang ${CFLAGS} ${LDFLAGS} -fsanitize=address test.c -o test
+	${CC} ${CFLAGS} ${LDFLAGS} -fsanitize=address test.c -o test
 	./test
 
 
 .PHONY: clean
 clean:
 	rm -r *.o crash-* leak-* fuzz-* *.prof* fuzzer test coverage __pycache__ *.so 2>/dev/null || true
+
+
+.PHONY: compile
+compile: ../bencode_fast/bencodemodule.c
+	${CC} ${CFLAGS} -fsanitize=fuzzer,address ../bencode_fast/bencodemodule.c -c -o bencodemodule.o

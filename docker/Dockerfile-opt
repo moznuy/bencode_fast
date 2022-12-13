@@ -33,6 +33,14 @@ ENV PATH="/opt/python/bin:$PATH"
 RUN make install
 RUN echo "/opt/python/lib" > /etc/ld.so.conf.d/custom-python.conf
 RUN ldconfig
+
+ARG UNAME=testuser
+ARG UID=1000
+ARG GID=1000
+RUN groupadd -g $GID -o $UNAME
+RUN useradd -m -u $UID -g $GID -G docker -o -s /bin/bash $UNAME
+USER $UNAME
+
 CMD python3
 
 #FROM debian:11-slim as final

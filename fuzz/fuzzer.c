@@ -1,4 +1,5 @@
 // Intentional .c include!
+#define FUZZING
 #include <bencodemodule.c>
 #include <threads.h>
 
